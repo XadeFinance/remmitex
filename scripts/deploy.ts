@@ -15,7 +15,7 @@ async function main() {
 
   const impAddr = await getImplementation(PendingPool.address);
 
-  console.log(`PendingPool deployed to", =>, Proxy: ${PendingPool.address}, implementation: ${impAddr}`);
+  console.log(`PendingPool deployed to => Proxy: ${PendingPool.address}, implementation: ${impAddr}`);
 
   return PendingPool.address
 }

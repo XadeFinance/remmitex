@@ -9,7 +9,7 @@ contract PendingPool is XadeOwnableUpgrade {
     event PaymentRedeemed(address Recepient, uint256 Value, address Token);
 
     modifier onlyRedeemer() {
-        require(redeemer == _msgSender(), "caller not redemmer");
+        require(redeemer == _msgSender(), "PendingPool: caller not redeemer");
         _;
     }
      
@@ -41,7 +41,7 @@ contract PendingPool is XadeOwnableUpgrade {
         return _token.balanceOf(address(this));
     }
 
-    function setRedeemer(address _redemmer) external onlyOwner {
-        redeemer = _redemmer;
+    function setRedeemer(address _redeemer) external onlyOwner {
+        redeemer = _redeemer;
     }
 }
