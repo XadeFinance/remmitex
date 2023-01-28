@@ -22,16 +22,20 @@ describe("PendingPool", function () {
     const accounts = await ethers.getSigners();
     owner = accounts[0];
     Alice = accounts[1];
+    Bob = accounts[2];
 
     await usdc.approve(PendingPool.address, 1_000_000)
   })
 
   describe("Deployment", function () {
     it("Should deploy and upgrade correctly", async () => {
+      const pendingPoolV1 = await ethers.getContractFactory("PendingPool");
+      const PendingPoolV1 = await upgrades.deployProxy(pendingPoolV1, {initializer : "initialize" });
+      await PendingPoolV1.deployed();
+      await PendingPoolV1.setRedeemer(Alice.address);
+
       const PendingPoolV2 = await ethers.getContractFactory("PendingPool");
-    
-      await PendingPool.setRedeemer(Alice.address);
-      const upgraded = await upgrades.upgradeProxy(PendingPool.address, PendingPoolV2);
+      const upgraded = await upgrades.upgradeProxy(PendingPoolV1.address, PendingPoolV2);
   
       const redeemer = await upgraded.redeemer();
       expect(redeemer).to.equal(Alice.address);
@@ -66,7 +70,7 @@ describe("PendingPool", function () {
     it("force error, insufficient funds", async () => {
       await usdc.transfer(Alice.address, 200);
       await usdc.approve(PendingPool.address, 500, {from: Alice.address});
-      expect(await PendingPool.deposit(usdc.address, 500, {from: Alice.address})).to.be.revertedWith("Transfer failed");
+      expect(await PendingPool.deposit(usdc.address, 500, {from: Alice.address})).to.be.revertedWith('ERC20: transfer amount exceeds balance');
     });
   })
 
@@ -89,6 +93,10 @@ describe("PendingPool", function () {
 
     it("Should emit event on redeem", async () => {
       expect(await PendingPool.redeem(usdc.address, Alice.address, 500, {from: Bob.address})).to.emit(PendingPool, "PaymentRedeemed").withArgs(Alice.address, 500, usdc.address);
+    });
+
+    it("Force error: 'PendingPool: caller not redeemer'", async () => {
+      expect(await PendingPool.redeem(usdc.address, Alice.address, 500, {from: Alice.address})).to.be.revertedWith("PendingPool: caller not redeemer");
     });
   })
 
